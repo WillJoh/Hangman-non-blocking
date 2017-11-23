@@ -10,5 +10,7 @@ package hangman.common;
  * @author William Joahnsson
  */
 public class Constants {
-    public static final String MSG_DELIMITER = ";:;";
+    public static final String CMD_DELIMITER = ";:;";
+    
+    public static final String CMD_LENGTH_DELIMITER = ":;:";
 }

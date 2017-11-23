@@ -5,8 +5,9 @@
  */
 package hangman.server.net;
 
+import hangman.common.CommandHandler;
 import hangman.common.Constants;
-import hangman.common.MsgHeaders;
+import hangman.common.CommandHeaders;
 import hangman.server.controller.Controller;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,6 +15,13 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.concurrent.ForkJoinPool;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -21,69 +29,96 @@ import java.net.Socket;
  */
 public class ClientHandler implements Runnable {
     private final Server server;
-    private final Socket client;
-    private BufferedReader fromClient;
-    private PrintWriter toClient;
+    private final SocketChannel client;
+    private final CommandHandler cmdHandler = new CommandHandler();
+    private final ByteBuffer cmdFromClient = ByteBuffer.allocateDirect(16384);
+    public final Queue<ByteBuffer> cmdToSend = new ArrayDeque<ByteBuffer>();
     private Controller controller = new Controller();
     
-    private boolean connected;
-    
-    public ClientHandler(Server server, Socket client) {
+    public ClientHandler(Server server, SocketChannel client) {
         this.server = server;
         this.client = client;
-        connected = true;
+        controller.startNewGame();
+        try {
+            sendStatusToClient();
+        } catch (IOException ex) {
+            Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     @Override
     public void run() {
-        try {
-            fromClient = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            toClient = new PrintWriter(client.getOutputStream(), true);
-            toClient.println(controller.getCurrentState()); 
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
-
-        while(connected) {
+        while(cmdHandler.hasNext()) {
             try {
-                Command cmd = new Command(fromClient.readLine());
+                Command cmd = new Command(cmdHandler.nextCmd());
                 
                 switch (cmd.getHeader()) {
                     case START_GAME:
-                        controller.startNewGame();
-                        toClient.println(controller.getCurrentState());                        
+                        controller.startNewGame(); 
+                        sendStatusToClient();
                         break;
-                    case GUESS_WORD: 
+                    case GUESS_WORD:
                         controller.guessWord(cmd.getBody());
-                        toClient.println(controller.getCurrentState());      
+                        sendStatusToClient();
                         break;
                     case GUESS_CHAR:
                         controller.guessChar(cmd.getBody().charAt(0));
-                        toClient.println(controller.getCurrentState());      
+                        sendStatusToClient();
                         break;
                     case DISCONNECT:
-                        disconnectClient();
-                        break;         
+                        disconnectClient();         
+                        break;
                 }
-                        
-            } catch (IOException ioe) {
-                disconnectClient();
-                throw new RuntimeException(ioe);
+            } catch (IOException ex) {
+                Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
     
-    private void disconnectClient() {
+    public void sendStatusToClient() throws IOException{
+        String cmd = controller.getCurrentState();
+        cmd = Integer.toString(cmd.length()) + Constants.CMD_LENGTH_DELIMITER + cmd;
+        
+        ByteBuffer completeCmd = ByteBuffer.wrap(cmd.getBytes());
+        queueCmd(completeCmd);
+    }
+    
+    public void sendCmd(ByteBuffer cmd) throws IOException {
+        client.write(cmd);
+        if (cmd.hasRemaining()) {
+            throw new RuntimeException("CommandBuffer not empty, can't send");
+        }
+    }
+    
+    private void queueCmd(ByteBuffer cmd) {
+            cmdToSend.add(cmd);
+        }
+    
+    public void reciveCmd() throws IOException {
+        cmdFromClient.clear();
+        if(client.read(cmdFromClient) == -1) {
+            throw new IOException("Connection closed by client");
+        }
+        cmdHandler.appendNewString(getCmdFromBuffer());
+        ForkJoinPool.commonPool().execute(this);
+    }
+    
+    private String getCmdFromBuffer() {
+        cmdFromClient.flip();
+        byte[] cmd = new byte[cmdFromClient.remaining()];
+        cmdFromClient.get(cmd);
+        return new String(cmd);
+    }
+    
+    public void disconnectClient() {
         try {
             client.close();
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
-        connected = false;
-        server.removeHandler(this);
     }
     
     private static class Command {
-        private MsgHeaders header;
+        private CommandHeaders header;
         private String body;
         private String command;
         
@@ -93,21 +128,21 @@ public class ClientHandler implements Runnable {
         }
         
         private void extractHeaderAndBody(String command){
-            String header = command.split(Constants.MSG_DELIMITER)[0];
-            if (header.equals(MsgHeaders.START_GAME.toString())) {
-                this.header = MsgHeaders.START_GAME;
-            } else if (header.equals(MsgHeaders.DISCONNECT.toString())) {
-                this.header = MsgHeaders.DISCONNECT;
-            } else if (header.equals(MsgHeaders.GUESS_WORD.toString())) {
-                this.header = MsgHeaders.GUESS_WORD;
-                this.body = command.split(Constants.MSG_DELIMITER)[1];
-            } else if (header.equals(MsgHeaders.GUESS_CHAR.toString())) {
-                this.header = MsgHeaders.GUESS_CHAR;
-                this.body = command.split(Constants.MSG_DELIMITER)[1];
+            String header = command.split(Constants.CMD_DELIMITER)[0];
+            if (header.equals(CommandHeaders.START_GAME.toString())) {
+                this.header = CommandHeaders.START_GAME;
+            } else if (header.equals(CommandHeaders.DISCONNECT.toString())) {
+                this.header = CommandHeaders.DISCONNECT;
+            } else if (header.equals(CommandHeaders.GUESS_WORD.toString())) {
+                this.header = CommandHeaders.GUESS_WORD;
+                this.body = command.split(Constants.CMD_DELIMITER)[1];
+            } else if (header.equals(CommandHeaders.GUESS_CHAR.toString())) {
+                this.header = CommandHeaders.GUESS_CHAR;
+                this.body = command.split(Constants.CMD_DELIMITER)[1];
             } 
         }
         
-        public MsgHeaders getHeader() {
+        public CommandHeaders getHeader() {
             return header;
         }
         

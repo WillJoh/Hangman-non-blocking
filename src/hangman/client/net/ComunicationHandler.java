@@ -5,10 +5,16 @@
  */
 package hangman.client.net;
 
+import java.net.InetSocketAddress;
+
 /**
  *
  * @author William Joahnsson
  */
-public interface OutputHandler {
+public interface ComunicationHandler {
     public void handleMsg(String msg);
+    
+    public void connected(InetSocketAddress serverAddress);
+    
+    public void disconnected();
 }

@@ -9,7 +9,7 @@ package hangman.common;
  *
  * @author William Joahnsson
  */
-public enum MsgHeaders {
+public enum CommandHeaders {
     //Message from client to server to start a new game
     START_GAME,
     //Message from client to server to guess one character

@@ -6,7 +6,7 @@
 package hangman.client.view;
 
 import hangman.common.Constants;
-import hangman.common.MsgHeaders;
+import hangman.common.CommandHeaders;
 
 /**
  *
@@ -14,7 +14,7 @@ import hangman.common.MsgHeaders;
  */
 public class Command {
     private String command;
-    private MsgHeaders header;
+    private CommandHeaders header;
     private String body;
     public Command(String command) {
         this.command = command.toLowerCase();
@@ -23,24 +23,24 @@ public class Command {
     
     private void extractHeaderAndBody(String command) {
         if (command.equals("start game")) {
-            header = MsgHeaders.START_GAME;
+            header = CommandHeaders.START_GAME;
             body = "";
         } else if (command.equals("disconnect")) {
-            header = MsgHeaders.DISCONNECT;
+            header = CommandHeaders.DISCONNECT;
             body = "";
         } else if (command.split(" ")[0].equals("connect")) {
-            header = MsgHeaders.CONNECT;
+            header = CommandHeaders.CONNECT;
             body = command;
         } else if (command.length() == 1) {
-            header = MsgHeaders.GUESS_CHAR;
+            header = CommandHeaders.GUESS_CHAR;
             body = command;
         } else if (!command.contains(" ")) {
-            header = MsgHeaders.GUESS_WORD;
+            header = CommandHeaders.GUESS_WORD;
             body = command;
         }
     }
     
-    public MsgHeaders getHeader() {
+    public CommandHeaders getHeader() {
         return header;
     }
     

@@ -6,8 +6,9 @@
 package hangman.client.view;
 
 import hangman.client.controller.Controller;
-import hangman.client.net.OutputHandler;
+import java.net.InetSocketAddress;
 import java.util.Scanner;
+import hangman.client.net.ComunicationHandler;
 
 /**
  *
@@ -67,10 +68,22 @@ public class Interpreter implements Runnable{
         }
     }
     
-    private class ConsoleOutput implements OutputHandler {
+    private class ConsoleOutput implements ComunicationHandler {
         @Override
         public void handleMsg(String msg) {
             output.println(msg);
+        }
+        
+        
+        @Override
+        public void connected(InetSocketAddress serverAddress) {
+            output.println("Connected to " + serverAddress.getHostName() + ":"
+                           + serverAddress.getPort());
+        }
+
+        @Override
+        public void disconnected() {
+            output.println("Disconnected from server.");
         }
     }
 }

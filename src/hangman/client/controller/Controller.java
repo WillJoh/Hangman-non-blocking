@@ -6,10 +6,10 @@
 package hangman.client.controller;
 
 import hangman.client.net.Connection;
-import hangman.client.net.OutputHandler;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.CompletableFuture;
+import hangman.client.net.ComunicationHandler;
 
 /**
  *
@@ -22,13 +22,9 @@ public class Controller {
         connection = new Connection();
     }
     
-    public void connect(String hostAddress, int portNr, OutputHandler outputHandler) {
+    public void connect(String hostAddress, int portNr, ComunicationHandler outputHandler) {
         CompletableFuture.runAsync(() -> {
-            try {
-                connection.connect(hostAddress, portNr, outputHandler);
-            } catch (IOException ioe) {
-                throw new UncheckedIOException(ioe);
-            }
+            connection.connect(hostAddress, portNr, outputHandler);
         }).thenRun(() -> outputHandler.handleMsg("Successfully connected to " + 
                 hostAddress + ":" + portNr));
     }
