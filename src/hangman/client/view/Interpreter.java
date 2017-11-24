@@ -77,8 +77,7 @@ public class Interpreter implements Runnable{
         
         @Override
         public void connected(InetSocketAddress serverAddress) {
-            output.println("Connected to " + serverAddress.getHostName() + ":"
-                           + serverAddress.getPort());
+            
         }
 
         @Override
