@@ -5,27 +5,16 @@
  */
 package hangman.server.net;
 
-import hangman.server.model.GameState;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
 import java.net.StandardSocketOptions;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Queue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -33,7 +22,6 @@ import java.util.logging.Logger;
  */
 public class Server {
     private int portNr = 5555;
-    private final List<ClientHandler> clients = new ArrayList<ClientHandler>();
     private Selector selector;
     private ServerSocketChannel serverChannel;
     

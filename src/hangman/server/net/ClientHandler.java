@@ -9,12 +9,7 @@ import hangman.common.CommandHandler;
 import hangman.common.Constants;
 import hangman.common.CommandHeaders;
 import hangman.server.controller.Controller;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.UncheckedIOException;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayDeque;
@@ -28,7 +23,6 @@ import java.util.logging.Logger;
  * @author William Joahnsson
  */
 public class ClientHandler implements Runnable {
-    private final Server server;
     private final SocketChannel client;
     private final CommandHandler cmdHandler = new CommandHandler();
     private final ByteBuffer cmdFromClient = ByteBuffer.allocateDirect(16384);
@@ -36,7 +30,6 @@ public class ClientHandler implements Runnable {
     private Controller controller = new Controller();
     
     public ClientHandler(Server server, SocketChannel client) {
-        this.server = server;
         this.client = client;
         controller.startNewGame();
         try {

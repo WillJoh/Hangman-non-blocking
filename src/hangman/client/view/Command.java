@@ -5,7 +5,6 @@
  */
 package hangman.client.view;
 
-import hangman.common.Constants;
 import hangman.common.CommandHeaders;
 
 /**

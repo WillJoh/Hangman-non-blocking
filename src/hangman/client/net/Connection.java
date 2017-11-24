@@ -8,20 +8,14 @@ package hangman.client.net;
 import hangman.common.CommandHandler;
 import hangman.common.Constants;
 import hangman.common.CommandHeaders;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Queue;
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
 
@@ -30,8 +24,6 @@ import java.util.concurrent.ForkJoinPool;
  * @author William Joahnsson
  */
 public class Connection implements Runnable{
-    private static final int MESSAGE_TIMEOUT = 60000;
-    private static final int SESSION_TIMEOUT = 2000000;
     private Boolean connected;
     private InetSocketAddress serverAddress;
     private SocketChannel channel;
@@ -90,35 +82,26 @@ public class Connection implements Runnable{
     private void completeConnection(SelectionKey key) throws IOException {
         channel.finishConnect();
         key.interestOps(SelectionKey.OP_READ);
-        /*try {
-            InetSocketAddress remoteAddress = (InetSocketAddress) channel.getRemoteAddress();
-            
-        }*/
-        
+                
         Executor pool = ForkJoinPool.commonPool();
-            pool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    listener.connected(serverAddress);
-                }
-            });
+            pool.execute(() -> {
+                listener.connected(serverAddress);
+        });
     }
     
     public void disconnect() throws IOException {
         sendMsg(CommandHeaders.DISCONNECT.toString(), "");
         connected = false;
+        doDisconnect();
     }
     
     private void doDisconnect() throws IOException {
         channel.close();
         channel.keyFor(selector).cancel();
         Executor pool = ForkJoinPool.commonPool();
-            pool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    listener.disconnected();
-                }
-            });
+            pool.execute(() -> {
+                listener.disconnected();
+        });
     }
     
     public void sendStartNewGame() {
@@ -173,11 +156,8 @@ public class Connection implements Runnable{
             String cmd = cmdHandler.nextCmd();
             
             Executor pool = ForkJoinPool.commonPool();
-            pool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    listener.handleMsg(cmd);
-                }
+            pool.execute(() -> {
+                listener.handleMsg(cmd);
             });
         }
     }

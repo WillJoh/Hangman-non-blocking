@@ -8,7 +8,6 @@ package hangman.client.controller;
 import hangman.client.net.Connection;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.concurrent.CompletableFuture;
 import hangman.client.net.ComunicationHandler;
 
 /**
@@ -23,10 +22,8 @@ public class Controller {
     }
     
     public void connect(String hostAddress, int portNr, ComunicationHandler outputHandler) {
-        CompletableFuture.runAsync(() -> {
-            connection.connect(hostAddress, portNr, outputHandler);
-        }).thenRun(() -> outputHandler.handleMsg("Successfully connected to " + 
-                hostAddress + ":" + portNr));
+        connection.connect(hostAddress, portNr, outputHandler);
+        outputHandler.handleMsg("Successfully connected to " + hostAddress + ":" + portNr);
     }
     
     public void disconnect() {
@@ -38,14 +35,14 @@ public class Controller {
     }
     
     public void sendStartGame() {
-        CompletableFuture.runAsync(() -> connection.sendStartNewGame());
+        connection.sendStartNewGame();
     }
     
     public void sendWord(String guess) {
-        CompletableFuture.runAsync(() -> connection.sendWord(guess));
+        connection.sendWord(guess);
     }
     
     public void sendChar(char guess) {
-        CompletableFuture.runAsync(() -> connection.sendChar(guess));
+        connection.sendChar(guess);
     }
 }

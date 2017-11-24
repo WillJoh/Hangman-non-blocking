@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -26,7 +24,7 @@ public class GameState {
     private boolean lost = false;
     private int score;
     private int remainingGuesses;
-    List<String> words = new ArrayList<String>();
+    List<String> words = new ArrayList<>();
     Random random  = new Random();
     
     public GameState() {
